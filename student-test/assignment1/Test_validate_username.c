@@ -14,9 +14,12 @@
 */
 void test_validate_my_username()
 {
-    /**
-     * TODO: Replace the line below with your code here as described above to verify your /conf/username.txt 
-     * config file and my_username() functions are setup properly
-     */
-    TEST_ASSERT_TRUE_MESSAGE(false,"AESD students, please fix me!");
+    /* Obtain the username from the conf file */
+    char *username_from_conf_file = malloc_username_from_conf_file();
+
+    /* Test if the usernames are equal */
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(username_from_conf_file, my_username(), "Mismatch in usernames");
+    
+    /* Free the pointer that was malloc'ed earlier */
+    free(username_from_conf_file);
 }
