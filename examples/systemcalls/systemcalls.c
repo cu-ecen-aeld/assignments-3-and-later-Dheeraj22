@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +21,15 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+    int waitstatus = 0;
+    
+    /* Obtain the wait status of the system command */
+    waitstatus = system(cmd);
 
-    return true;
+    /* Check if the wait status is 1 for successful termination of child */
+    if(WIFEXITED(waitstatus) == 1) return true;
+
+    return false;
 }
 
 /**
@@ -45,9 +57,6 @@ bool do_exec(int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
 
 /*
  * TODO:
@@ -58,10 +67,36 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    int status;
+    pid_t pid = fork();
+
+    /* Check if it is child process */
+    if(pid == 0)
+    {
+        /* Execute the new program */
+        execv(command[0], command);
+        
+        /* Return failure status if it reaches here */
+        exit(-1);
+    }
+    else if(pid == -1)
+    {
+        return false;
+    }
+
+    /* Wait for child to terminate */
+    if(waitpid(pid, &status, 0) == -1)
+    {
+        return false;
+    }
+    else if(WIFEXITED(status))
+    {
+        return (EXIT_SUCCESS == WEXITSTATUS(status));
+    }
 
     va_end(args);
 
-    return true;
+    return false;
 }
 
 /**
@@ -80,10 +115,6 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
-
 
 /*
  * TODO
@@ -92,8 +123,53 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+    int status;
+    pid_t pid;
+
+    /* Open the output file for redirection */
+    int fd = open(outputfile, O_RDWR|O_CREAT, 0644);
+    if(fd < 0)
+    { 
+        return false;
+    }
+
+    switch (pid = fork()) 
+    {
+    case -1: 
+    {
+        return false;
+    }
+    case 0:
+    {
+        /* Create the duplicate file for Stdout redirection */
+        if(dup2(fd, 1) < 0)
+        { 
+            exit(-1);
+        }
+        
+        close(fd);
+
+        /* Execute the command */
+        execv(command[0], command); 
+
+        /* Return failure status if it reaches here */
+        exit(-1);
+    }
+    default:
+        close(fd);
+    }
+
+    /* Wait for child to terminate */
+    if(waitpid(pid, &status, 0) == -1)
+    {
+        return false;
+    }
+    else if(WIFEXITED(status))
+    {
+        return (EXIT_SUCCESS == WEXITSTATUS(status));
+    }
 
     va_end(args);
 
-    return true;
+    return false;
 }
