@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Assign the arguments to variables
 filesdr=$1
