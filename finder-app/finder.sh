@@ -27,7 +27,7 @@ number_of_files=$(find ${filesdr} -type f | wc -l)
 matching_lines=$(grep -r "${searchstr}" ${filesdr}* | wc -l)
 
 # Print the output
-echo "The number of files are ${number_of_files} and the number of matching lines are ${matching_lines}"
+echo "The number of files are ${number_of_files} and the number of matching lines are ${matching_lines}" > /tmp/assignment4-result.txt
 
 # Exit the script with success code
 exit 0
