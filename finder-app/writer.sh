@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Assign arguments to respective variables
 writefile=$1
